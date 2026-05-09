@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+  <title>Multiestudios – Consultor de Normas INEN para Ingenierías Policiales</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Segoe UI', Tahoma, sans-serif; background: #f4f6f9; color: #333; }
+    .whatsapp-float {
+      position: fixed; bottom: 20px; right: 20px; z-index: 1000;
+      width: 60px; height: 60px; background-color: #25D366; border-radius: 50%;
+      box-shadow: 2px 2px 8px rgba(0,0,0,0.3);
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer; transition: transform 0.2s;
+    }
+    .whatsapp-float:hover { transform: scale(1.1); }
+    .whatsapp-float a { color: white; text-decoration: none; font-size: 30px; line-height: 1; }
+    .footer {
+      text-align: center; padding: 1rem; background: #004d40; color: white;
+      font-size: 0.9rem; position: fixed; bottom: 0; width: 100%; z-index: 999;
+    }
+    .access-screen {
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      min-height: 100vh; background: linear-gradient(135deg, #004d40, #00695c);
+      padding-bottom: 4rem;
+    }
+    .access-card {
+      background: white; padding: 3rem 2rem; border-radius: 1rem; box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+      text-align: center; width: 90%; max-width: 450px; margin: 2rem 0;
+    }
+    .access-card h1 { color: #004d40; margin-bottom: 0.2rem; font-size: 2rem; }
+    .access-card .subtitle { color: #7f8c8d; margin-bottom: 0.5rem; }
+    .access-card .lema { color: #555; margin-bottom: 2rem; font-style: italic; }
+    .access-card select, .access-card input {
+      width: 100%; padding: 0.8rem; margin-bottom: 1rem; border: 1px solid #ccc; border-radius: 0.5rem;
+      font-size: 1rem;
+    }
+    .btn {
+      background: #004d40; color: white; border: none; padding: 0.8rem 1.5rem; border-radius: 0.5rem;
+      font-size: 1rem; cursor: pointer; transition: background 0.3s; width: 100%; margin-top: 0.5rem;
+    }
+    .btn:hover { background: #00695c; }
+    .btn.secondary { background: #607d8b; }
+    .error-msg { color: #c62828; margin-top: 0.5rem; font-weight: bold; }
+    .main-panel { display: none; padding: 2rem; max-width: 1100px; margin: 0 auto; padding-bottom: 5rem; }
+    .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; }
+    .header h2 { color: #004d40; }
+    .logout-btn { background: #b71c1c; color: white; border: none; padding: 0.5rem 1.2rem; border-radius: 0.3rem; cursor: pointer; }
+    .section { background: white; border-radius: 0.8rem; padding: 1.8rem; margin-bottom: 2rem; box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
+    .section h3 { color: #004d40; margin-bottom: 1rem; border-bottom: 2px solid #004d40; padding-bottom: 0.4rem; }
+    .search-box { display: flex; gap: 1rem; margin-bottom: 1.5rem; }
+    .search-box input { flex: 1; padding: 0.8rem; border: 1px solid #ccc; border-radius: 0.5rem; font-size: 1rem; }
+    .result-box { background: #fafafa; border-radius: 0.5rem; padding: 1.5rem; min-height: 150px; }
+    .loading { text-align: center; color: #004d40; margin: 1rem 0; }
+    pre { white-space: pre-wrap; background: #f5f5f5; padding: 1rem; border-radius: 0.5rem; }
+  </style>
+</head>
+<body>
+
+<div class="whatsapp-float">
+  <a href="https://wa.me/593996328491" target="_blank" title="Contactar por WhatsApp">💬</a>
+</div>
+
+<div class="footer">
+  Powered by Physics – 0995324419 &nbsp;|&nbsp; © 2026 Multiestudios
+</div>
+
+<!-- PANTALLA DE ACCESO -->
+<div id="accessScreen" class="access-screen">
+  <div class="access-card">
+    <h1>MULTIESTUDIOS</h1>
+    <p class="subtitle">Centro de Educación Continua</p>
+    <p class="lema">Consultor Inteligente de Normas INEN para Ingenierías Policiales</p>
+    <input type="text" id="cedulaInput" placeholder="Número de cédula" />
+    <select id="carreraSelect">
+      <option value="">Seleccione carrera</option>
+      <option>Ingeniería Mecánica</option>
+      <option>Ingeniería Civil</option>
+      <option>Ingeniería Industrial</option>
+      <option>Ingeniería Informática</option>
+      <option>Arquitectura</option>
+      <option>Administración de Empresas</option>
+    </select>
+    <button class="btn" id="btnIngresar">Ingresar</button>
+    <div id="loginError" class="error-msg"></div>
+  </div>
+</div>
+
+<!-- PANEL PRINCIPAL -->
+<div id="mainPanel" class="main-panel">
+  <div class="header">
+    <h2>Consultor de Normas – <span id="careerDisplay"></span></h2>
+    <button class="logout-btn" id="btnLogout">Cerrar sesión</button>
+  </div>
+
+  <div class="section">
+    <h3>Buscar norma técnica INEN aplicada a la función policial</h3>
+    <div class="search-box">
+      <input type="text" id="searchInput" placeholder="Ej: chalecos antibalas, blindaje, hormigón..." />
+      <button class="btn" id="btnBuscar" style="width: auto;">Buscar</button>
+    </div>
+    <div id="loadingMsg" class="loading" style="display:none;">Consultando normativa, espere unos segundos...</div>
+    <div id="resultContainer" class="result-box">
+      <p>Los resultados de la búsqueda aparecerán aquí.</p>
+    </div>
+  </div>
+</div>
+
+<script>
+// ==================== CONFIGURACIÓN ====================
+const App = {
+  API_KEY: 'sk-tu-api-key-aqui',  // ← Reemplazar con tu API key real
+  API_URL: 'https://api.deepseek.com/v1/chat/completions',
+  MODEL: 'deepseek-v4-flash',
+  currentUser: null,
+  // Usuarios de prueba para las seis carreras
+  usuarios: [
+    { cedula: '1710280942', carrera: 'Ingeniería Mecánica' },
+    { cedula: '1711111111', carrera: 'Ingeniería Civil' },
+    { cedula: '1712222222', carrera: 'Ingeniería Industrial' },
+    { cedula: '1715555555', carrera: 'Ingeniería Informática' },
+    { cedula: '1716666666', carrera: 'Arquitectura' },
+    { cedula: '1717777777', carrera: 'Administración de Empresas' }
+  ]
+};
+
+// ==================== CATÁLOGO LOCAL DE NORMAS INEN ====================
+// Organizado por carrera y palabras clave. Cada entrada tiene el número de la norma,
+// el título y un breve detalle que se enviará a DeepSeek para contextualizar.
+App.normasCatalogo = {
+  'Ingeniería Mecánica': {
+    'chalecos antibalas': {
+      norma: 'NTE INEN 2816',
+      titulo: 'Chalecos antibalas. Requisitos y métodos de ensayo.',
+      detalle: 'Define niveles de protección balística (NIJ), materiales (Kevlar, Dyneema), ensayos de resistencia y requisitos para certificación.'
+    },
+    'blindaje vehicular': {
+      norma: 'NTE INEN 034 / NTE INEN 2207',
+      titulo: 'Vidrios de seguridad para vehículos. Blindajes.',
+      detalle: 'Especifica requisitos de transparencia, resistencia al impacto y ensayos balísticos para vidrios y carrocerías blindadas.'
+    },
+    'emisiones': {
+      norma: 'NTE INEN 2207',
+      titulo: 'Límites de emisiones para fuentes móviles terrestres.',
+      detalle: 'Establece los límites máximos de CO, HC, NOx y opacidad para motores de gasolina y diésel en el Ecuador.'
+    },
+    'frenos': {
+      norma: 'NTE INEN 1669',
+      titulo: 'Sistemas de frenos para vehículos automotores.',
+      detalle: 'Requisitos de eficacia de frenado, estabilidad y pruebas para vehículos de servicio policial.'
+    }
+  },
+  'Ingeniería Civil': {
+    'hormigón armado': {
+      norma: 'NTE INEN 1855',
+      titulo: 'Hormigón. Determinación de la resistencia a la compresión.',
+      detalle: 'Método de ensayo para cilindros de hormigón utilizado en cuarteles y estructuras policiales.'
+    },
+    'sismorresistente': {
+      norma: 'NEC-SE-DS (Norma Ecuatoriana de la Construcción)',
+      titulo: 'Peligro sísmico y diseño sismorresistente.',
+      detalle: 'Requisitos para el diseño de edificaciones esenciales, como cuarteles de policía, garantizando seguridad ante sismos.'
+    },
+    'muros perimetrales': {
+      norma: 'NTE INEN 2280',
+      titulo: 'Mampostería de bloques de hormigón.',
+      detalle: 'Especificaciones para muros de cerramiento en instalaciones policiales, incluyendo resistencia y durabilidad.'
+    }
+  },
+  'Ingeniería Industrial': {
+    'control calidad': {
+      norma: 'ISO 2859-1 / NTE INEN 2859',
+      titulo: 'Procedimientos de muestreo para inspección por atributos.',
+      detalle: 'Planes de muestreo para recepción de uniformes, equipos y suministros policiales.'
+    },
+    'seguridad ocupacional': {
+      norma: 'NTE INEN 2266',
+      titulo: 'Colores, señales y símbolos de seguridad.',
+      detalle: 'Aplicación en talleres y almacenes de la Policía Nacional para prevención de riesgos laborales.'
+    }
+  },
+  'Ingeniería Informática': {
+    'seguridad informática': {
+      norma: 'NTE INEN 27001',
+      titulo: 'Sistema de gestión de seguridad de la información.',
+      detalle: 'Requisitos para proteger la información en bases de datos policiales y sistemas de comunicación.'
+    },
+    'cableado estructurado': {
+      norma: 'NTE INEN 50173',
+      titulo: 'Sistemas de cableado genérico para centros de datos.',
+      detalle: 'Estándares para la infraestructura de red en edificios policiales.'
+    }
+  },
+  'Arquitectura': {
+    'accesibilidad': {
+      norma: 'NTE INEN 2244',
+      titulo: 'Accesibilidad de las personas al medio físico.',
+      detalle: 'Requisitos para rampas, puertas y sanitarios accesibles en edificios públicos de la Policía.'
+    },
+    'escaleras emergencia': {
+      norma: 'NTE INEN-SE-EG',
+      titulo: 'Escaleras de emergencia en edificaciones.',
+      detalle: 'Dimensiones, materiales y señalización para evacuación segura en cuarteles.'
+    }
+  },
+  'Administración de Empresas': {
+    'contratación pública': {
+      norma: 'LOSNCP (Ley Orgánica del Sistema Nacional de Contratación Pública)',
+      titulo: 'Normativa para adquisición de bienes y servicios.',
+      detalle: 'Procedimientos de licitación, evaluación de ofertas y fiscalización de contratos en el sector público.'
+    },
+    'calidad servicios': {
+      norma: 'ISO 9001 / NTE INEN 9001',
+      titulo: 'Sistemas de gestión de la calidad.',
+      detalle: 'Aplicación en los procesos administrativos de la Policía Nacional para mejorar eficiencia y transparencia.'
+    }
+  }
+};
+
+// ==================== FUNCIONES DE INTERFAZ ====================
+App.mostrarAcceso = function() {
+  document.getElementById('accessScreen').style.display = 'flex';
+  document.getElementById('mainPanel').style.display = 'none';
+  document.getElementById('cedulaInput').value = '';
+  document.getElementById('carreraSelect').value = '';
+  document.getElementById('loginError').textContent = '';
+};
+
+App.mostrarPanel = function() {
+  document.getElementById('accessScreen').style.display = 'none';
+  document.getElementById('mainPanel').style.display = 'block';
+  document.getElementById('careerDisplay').textContent = App.currentUser.carrera;
+  document.getElementById('resultContainer').innerHTML = '<p>Los resultados de la búsqueda aparecerán aquí.</p>';
+  document.getElementById('searchInput').value = '';
+};
+
+App.login = function() {
+  const cedula = document.getElementById('cedulaInput').value.trim();
+  const carrera = document.getElementById('carreraSelect').value;
+  const errorDiv = document.getElementById('loginError');
+  errorDiv.textContent = '';
+  if (!cedula || !carrera) {
+    errorDiv.textContent = 'Complete todos los campos.';
+    return;
+  }
+  const encontrado = App.usuarios.find(u => u.cedula === cedula && u.carrera === carrera);
+  if (encontrado) {
+    App.currentUser = encontrado;
+    App.mostrarPanel();
+  } else {
+    errorDiv.textContent = 'Cédula o carrera no autorizada.';
+  }
+};
+
+App.logout = function() {
+  App.currentUser = null;
+  App.mostrarAcceso();
+};
+
+// ==================== BÚSQUEDA Y PROCESAMIENTO ====================
+App.buscarNorma = async function() {
+  const query = document.getElementById('searchInput').value.trim();
+  if (!query) {
+    document.getElementById('resultContainer').innerHTML = '<p>Ingrese una palabra o frase para buscar.</p>';
+    return;
+  }
+  if (!App.currentUser) return;
+
+  document.getElementById('loadingMsg').style.display = 'block';
+  document.getElementById('resultContainer').innerHTML = '';
+
+  try {
+    // 1. Buscar en el catálogo local
+    const catalogo = App.normasCatalogo[App.currentUser.carrera] || {};
+    let entradaNorma = null;
+    // Coincidencia simple por palabras clave
+    for (const [clave, valor] of Object.entries(catalogo)) {
+      if (query.toLowerCase().includes(clave.toLowerCase()) || clave.toLowerCase().includes(query.toLowerCase())) {
+        entradaNorma = valor;
+        break;
+      }
+    }
+
+    // 2. Construir el prompt para DeepSeek
+    let prompt = '';
+    if (entradaNorma) {
+      prompt = `Eres un experto asesor técnico de la Policía Nacional del Ecuador. El usuario consulta sobre: "${query}".\n\nLa normativa ecuatoriana aplicable es:\nNorma: ${entradaNorma.norma}\nTítulo: ${entradaNorma.titulo}\nDetalle: ${entradaNorma.detalle}\n\nPor favor, explica:\n- Descripción técnica detallada de la norma.\n- Aplicación práctica en el contexto de la Policía Nacional (vehículos, instalaciones, equipos).\n- Implicaciones para la contratación pública (LOSNCP), si corresponde.\n- Preguntas frecuentes de evaluación que un aspirante a especialista podría enfrentar sobre este tema.\nUtiliza un tono claro y profesional.`;
+    } else {
+      // Si no hay coincidencia local, se envía una consulta más abierta pero acotada a la carrera
+      prompt = `Eres un experto asesor técnico de la Policía Nacional del Ecuador. El usuario, un ingeniero en ${App.currentUser.carrera}, solicita información sobre: "${query}".\n\nIndica qué norma INEN (o normativa ecuatoriana) es aplicable, describe sus aspectos técnicos, cómo se relaciona con la doctrina policial y, si procede, con la contratación pública (LOSNCP). Si no existe una norma INEN específica, sugiere estándares internacionales equivalentes. Incluye posibles preguntas de evaluación.`;
+    }
+
+    // 3. Llamar a la API de DeepSeek
+    const respuesta = await App.callDeepSeek([
+      { role: 'system', content: 'Eres un asesor en normativa técnica ecuatoriana para la Policía Nacional. Responde de forma estructurada y concisa.' },
+      { role: 'user', content: prompt }
+    ], 0.3, 1500); // temperatura baja para precisión
+
+    // 4. Mostrar resultado
+    document.getElementById('resultContainer').innerHTML = `<pre>${respuesta}</pre>`;
+
+  } catch (error) {
+    console.error(error);
+    document.getElementById('resultContainer').innerHTML = `<p style="color:red;">Error al obtener la información. ${error.message}</p>`;
+  } finally {
+    document.getElementById('loadingMsg').style.display = 'none';
+  }
+};
+
+// ==================== API DEEPSEEK ====================
+App.callDeepSeek = async function(messages, temperature = 0.7, maxTokens = 2000) {
+  const resp = await fetch(App.API_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${App.API_KEY}` },
+    body: JSON.stringify({ model: App.MODEL, messages, temperature, max_tokens: maxTokens })
+  });
+  if (!resp.ok) {
+    const errBody = await resp.text();
+    throw new Error(`API error ${resp.status}: ${errBody}`);
+  }
+  const data = await resp.json();
+  return data.choices[0].message.content;
+};
+
+// ==================== INICIO ====================
+window.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('btnIngresar').addEventListener('click', App.login);
+  document.getElementById('btnLogout').addEventListener('click', App.logout);
+  document.getElementById('btnBuscar').addEventListener('click', App.buscarNorma);
+  // Permitir búsqueda presionando Enter en el campo de texto
+  document.getElementById('searchInput').addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') App.buscarNorma();
+  });
+  App.mostrarAcceso();
+});
+</script>
+</body>
+</html>
