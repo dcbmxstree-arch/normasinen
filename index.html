@@ -36,11 +36,17 @@
       font-size: 1rem; cursor: pointer; transition: background 0.3s; white-space: nowrap;
     }
     .btn:hover { background: #00695c; }
+    .btn-outline {
+      background: transparent; color: #004d40; border: 2px solid #004d40; padding: 0.6rem 1.2rem;
+      border-radius: 0.5rem; cursor: pointer; font-size: 0.9rem;
+    }
+    .btn-outline:hover { background: #e0f2f1; }
     .result-box { background: #fafafa; border-radius: 0.5rem; padding: 1.5rem; min-height: 150px; }
     .loading { text-align: center; color: #004d40; margin: 1rem 0; }
     pre { white-space: pre-wrap; background: #f5f5f5; padding: 1rem; border-radius: 0.5rem; }
     .verified { color: #2e7d32; font-weight: bold; margin-bottom: 0.5rem; }
     .unverified { color: #f57c00; margin-bottom: 0.5rem; }
+    a { color: #004d40; }
   </style>
 </head>
 <body>
@@ -82,7 +88,7 @@
 
 <script>
 const App = {
-  API_KEY: 'sk-5be59b1373ae48dfb7a39e9b2e5b5a46',  // ← Reemplazar con tu API key real
+  API_KEY: 'sk-tu-api-key-aqui',  // ← Reemplazar con tu API key real
   API_URL: 'https://api.deepseek.com/v1/chat/completions',
   MODEL: 'deepseek-v4-flash',
   carreraSeleccionada: ''
@@ -91,7 +97,6 @@ const App = {
 // ==================== CATÁLOGO LOCAL VERIFICADO (TODAS LAS CARRERAS) ====================
 App.normasCatalogo = {
   'Ingeniería Mecánica': {
-    // Los 50 temas con sus claves y normas
     'termodinámica motores': { norma:'NTE INEN 2207', titulo:'Gases de escape de motores. Límites.', detalle:'Define límites de emisiones (CO, HC, NOx) para motores diésel y gasolina.' },
     'motores GNV GLP': { norma:'NTE INEN 2207 / RTE INEN 034', titulo:'Emisiones y seguridad en vehículos a gas.', detalle:'Requisitos para vehículos convertidos a GNV o GLP en flotas policiales.' },
     'inyección electrónica OBD': { norma:'NTE INEN 2202 / RTE INEN 034', titulo:'Dispositivos de control de emisiones y diagnóstico a bordo.', detalle:'Condiciones para sistemas OBD y su verificación en revisiones técnicas.' },
@@ -219,42 +224,63 @@ App.buscarNorma = async function() {
     let resultadoHTML = '';
 
     if (coincidencias.length > 0) {
+      // Norma encontrada en catálogo → explicación controlada con IA
       const entrada = coincidencias[0];
       resultadoHTML += `<div class="verified">⚫ Norma verificada en catálogo oficial INEN</div>`;
       resultadoHTML += `<p><strong>Norma:</strong> ${entrada.norma}</p>`;
       resultadoHTML += `<p><strong>Título:</strong> ${entrada.titulo}</p>`;
       resultadoHTML += `<p><strong>Descripción técnica:</strong> ${entrada.detalle}</p>`;
       resultadoHTML += `<p><em>Carrera relacionada: ${entrada.carrera}</em></p>`;
-      // Explicación extendida con IA (solo si se encuentra la norma)
-      const prompt = `Eres un experto asesor técnico de la Policía Nacional del Ecuador. El usuario consultó sobre: "${query}".\nNorma de referencia: ${entrada.norma} - ${entrada.titulo}.\nDetalle: ${entrada.detalle}\n\nExplica la aplicación práctica en la Policía (vehículos, instalaciones, equipos), implicaciones para la contratación pública (LOSNCP) y posibles preguntas de examen. Tono claro y profesional.`;
+      
+      // Prompt restrictivo: solo explicar la norma dada, sin inventar otras
+      const prompt = `Eres un experto asesor técnico de la Policía Nacional del Ecuador. El usuario consultó sobre: "${query}".\nLa única norma de referencia es: ${entrada.norma} - ${entrada.titulo}.\nDetalle: ${entrada.detalle}\n\nExplica de forma clara y breve:\n- Aplicación práctica en la Policía Nacional.\n- Implicaciones para la contratación pública (LOSNCP), si corresponde.\n- Posibles preguntas de examen para un aspirante a especialista.\n\nIMPORTANTE: No menciones otras normas ni estándares distintos a los indicados arriba. Si necesitas referirte a otros documentos, omítelos por completo.`;
       try {
         const explicacion = await App.callDeepSeek([
-          { role: 'system', content: 'Eres un asesor en normativa técnica ecuatoriana para la Policía Nacional.' },
+          { role: 'system', content: 'Eres un asesor técnico. Solo puedes hablar sobre la norma proporcionada. No añadas referencias a otras normas o estándares.' },
           { role: 'user', content: prompt }
         ], 0.3, 800);
-        resultadoHTML += `<hr><p><strong>Análisis y aplicación práctica:</strong></p><pre>${explicacion}</pre>`;
+        // Filtro adicional: eliminar posibles menciones a normas no autorizadas (por si acaso)
+        const explicacionFiltrada = explicacion.replace(/(NTE INEN\s*\d{2,}|ISO\s*\d{2,})/gi, '***referencia no verificada***');
+        resultadoHTML += `<hr><p><strong>Análisis y aplicación práctica:</strong></p><pre>${explicacionFiltrada}</pre>`;
       } catch (apiError) {
         resultadoHTML += `<p style="color:red;">No se pudo obtener la explicación adicional: ${apiError.message}</p>`;
       }
     } else {
-      resultadoHTML += `<div class="unverified">⚫ No se encontró una norma exacta en el catálogo local. Se muestra información de referencia:</div>`;
-      const prompt = `Eres un asesor técnico de la Policía Nacional del Ecuador. El usuario busca normativa sobre: "${query}".\nIndica si existe alguna norma INEN aplicable y explica brevemente su utilidad. Si no estás completamente seguro, sugiere consultar el catálogo oficial del INEN. Sé conciso.`;
-      try {
-        const respuesta = await App.callDeepSeek([
-          { role: 'system', content: 'Responde solo si estás seguro de la norma. En caso contrario, recomienda verificar.' },
-          { role: 'user', content: prompt }
-        ], 0.3, 500);
-        resultadoHTML += `<pre>${respuesta}</pre>`;
-      } catch (apiError) {
-        resultadoHTML += `<p style="color:red;">Error al consultar: ${apiError.message}</p>`;
-      }
+      // Sin coincidencia en catálogo → SIN IA para normas
+      resultadoHTML += `<div class="unverified">⚫ No se encontró una norma INEN verificada para "<strong>${query}</strong>".</div>`;
+      resultadoHTML += `<p>Le recomendamos consultar directamente el catálogo oficial del Servicio Ecuatoriano de Normalización (INEN).</p>`;
+      resultadoHTML += `<p><a href="https://inen.gob.ec" target="_blank">🔗 Ir al sitio web del INEN</a></p>`;
+      // Opcional: botón para ayuda conceptual genérica (sin normas)
+      resultadoHTML += `<button class="btn-outline" id="btnAyudaConceptual">Solicitar aclaración técnica (sin referencias normativas)</button>`;
     }
 
     document.getElementById('resultContainer').innerHTML = resultadoHTML;
+
+    // Si se mostró el botón de ayuda conceptual, asignar evento
+    if (coincidencias.length === 0) {
+      document.getElementById('btnAyudaConceptual')?.addEventListener('click', () => App.obtenerAyudaConceptual(query));
+    }
+
   } catch (error) {
     document.getElementById('resultContainer').innerHTML = `<p style="color:red;">Error inesperado: ${error.message}</p>`;
   } finally {
     document.getElementById('loadingMsg').style.display = 'none';
+  }
+};
+
+// Función opcional para ayuda técnica SIN mencionar normas
+App.obtenerAyudaConceptual = async function(termino) {
+  const resultDiv = document.getElementById('resultContainer');
+  resultDiv.innerHTML += `<div id="ayudaExtra" style="margin-top:1rem; padding:1rem; background:#fff8e1; border-radius:0.5rem;"><em>Obteniendo aclaración técnica...</em></div>`;
+  try {
+    const prompt = `Eres un asesor técnico de la Policía Nacional del Ecuador. El usuario ha preguntado sobre "${termino}".\n\nExplica los principios técnicos o buenas prácticas de ingeniería relacionados con ese concepto en el ámbito policial. NO menciones ninguna norma, número de estándar ni referencia a reglamentos. Si no conoces el término, indícalo con honestidad. Sé conciso.`;
+    const respuesta = await App.callDeepSeek([
+      { role: 'system', content: 'Eres un asesor técnico extremadamente cuidadoso. No cites normas ni estándares. Responde solo sobre principios generales.' },
+      { role: 'user', content: prompt }
+    ], 0.3, 500);
+    document.getElementById('ayudaExtra').innerHTML = `<strong>Aclaración técnica (sin referencias normativas):</strong><pre>${respuesta}</pre>`;
+  } catch (e) {
+    document.getElementById('ayudaExtra').innerHTML = `<p style="color:red;">No se pudo obtener ayuda adicional.</p>`;
   }
 };
 
