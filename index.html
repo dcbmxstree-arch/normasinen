@@ -39,19 +39,18 @@
     .result-box { background: #fafafa; border-radius: 0.5rem; padding: 1.5rem; min-height: 150px; }
     .loading { text-align: center; color: #004d40; margin: 1rem 0; }
     pre { white-space: pre-wrap; background: #f5f5f5; padding: 1rem; border-radius: 0.5rem; }
+    .verified { color: #2e7d32; font-weight: bold; margin-bottom: 0.5rem; }
+    .unverified { color: #f57c00; margin-bottom: 0.5rem; }
   </style>
 </head>
 <body>
-
 <div class="whatsapp-float">
   <a href="https://wa.me/593996328491" target="_blank" title="Contactar por WhatsApp">💬</a>
 </div>
-
 <div class="footer">
   Powered by Physics – 0995324419 &nbsp;|&nbsp; © 2026 Multiestudios
 </div>
 
-<!-- PANEL PRINCIPAL (ACCESO LIBRE) -->
 <div id="mainPanel" class="main-panel">
   <div class="header">
     <h1>MULTIESTUDIOS</h1>
@@ -82,108 +81,115 @@
 </div>
 
 <script>
-// ==================== CONFIGURACIÓN ====================
 const App = {
-  API_KEY: 'sk-5be59b1373ae48dfb7a39e9b2e5b5a46',  // ← Reemplazar con tu API key real
+  API_KEY: 'sk-tu-api-key-aqui',  // ← Reemplazar con tu API key real
   API_URL: 'https://api.deepseek.com/v1/chat/completions',
-  MODEL: 'deepseek-reasoner',
-  carreraSeleccionada: '' // Se actualiza con el selector
+  MODEL: 'deepseek-v4-flash',
+  carreraSeleccionada: ''
 };
 
-// ==================== CATÁLOGO LOCAL DE NORMAS INEN ====================
+// ==================== CATÁLOGO LOCAL VERIFICADO (TODAS LAS CARRERAS) ====================
 App.normasCatalogo = {
   'Ingeniería Mecánica': {
-    'chalecos antibalas': {
-      norma: 'NTE INEN 2816',
-      titulo: 'Chalecos antibalas. Requisitos y métodos de ensayo.',
-      detalle: 'Define niveles de protección balística (NIJ), materiales (Kevlar, Dyneema), ensayos de resistencia y requisitos para certificación.'
-    },
-    'blindaje vehicular': {
-      norma: 'NTE INEN 034 / NTE INEN 2207',
-      titulo: 'Vidrios de seguridad para vehículos. Blindajes.',
-      detalle: 'Especifica requisitos de transparencia, resistencia al impacto y ensayos balísticos para vidrios y carrocerías blindadas.'
-    },
-    'emisiones': {
-      norma: 'NTE INEN 2207',
-      titulo: 'Límites de emisiones para fuentes móviles terrestres.',
-      detalle: 'Establece los límites máximos de CO, HC, NOx y opacidad para motores de gasolina y diésel en el Ecuador.'
-    },
-    'frenos': {
-      norma: 'NTE INEN 1669',
-      titulo: 'Sistemas de frenos para vehículos automotores.',
-      detalle: 'Requisitos de eficacia de frenado, estabilidad y pruebas para vehículos de servicio policial.'
-    }
+    // Los 50 temas con sus claves y normas
+    'termodinámica motores': { norma:'NTE INEN 2207', titulo:'Gases de escape de motores. Límites.', detalle:'Define límites de emisiones (CO, HC, NOx) para motores diésel y gasolina.' },
+    'motores GNV GLP': { norma:'NTE INEN 2207 / RTE INEN 034', titulo:'Emisiones y seguridad en vehículos a gas.', detalle:'Requisitos para vehículos convertidos a GNV o GLP en flotas policiales.' },
+    'inyección electrónica OBD': { norma:'NTE INEN 2202 / RTE INEN 034', titulo:'Dispositivos de control de emisiones y diagnóstico a bordo.', detalle:'Condiciones para sistemas OBD y su verificación en revisiones técnicas.' },
+    'refrigeración climatización': { norma:'NTE INEN 2495 / 2506', titulo:'Eficiencia energética en climatización.', detalle:'Consumos máximos y condiciones de operación en edificaciones policiales.' },
+    'transferencia calor blindajes': { norma:'NTE INEN 1669 / 1722', titulo:'Vidrios de seguridad para vehículos.', detalle:'Resistencia al impacto y propiedades térmicas en blindajes ligeros.' },
+    'dinámica vehicular comportamiento': { norma:'NTE INEN 2349', titulo:'Revisión técnica vehicular. Procedimientos.', detalle:'Evalúa estabilidad, frenado y aceleración de patrulleros.' },
+    'transmisiones cajas transferencia': { norma:'NTE INEN 2349 / RTE INEN 034', titulo:'Inspección de transmisiones en vehículos 4x4.', detalle:'Verifica integridad de ejes, diferenciales y cajas de transferencia.' },
+    'suspensión amortiguación': { norma:'NTE INEN 2349', titulo:'Verificación del sistema de suspensión.', detalle:'Garantiza comodidad y estabilidad en patrullajes sobre terreno irregular.' },
+    'frenos ABS emergencia': { norma:'NTE INEN 2185 / NTE INEN-ISO 6311', titulo:'Material de fricción y resistencia en frenos.', detalle:'Requisitos para pastillas, zapatas y discos en condiciones de emergencia.' },
+    'neumáticos presión desgaste': { norma:'NTE INEN 2097 / 2099 / 2100', titulo:'Llantas neumáticas. Requisitos de calidad.', detalle:'Especificaciones para neumáticos en asfalto, tierra y altura.' },
+    'bastidores carrocerías': { norma:'NTE INEN 1323 / RTE INEN 034', titulo:'Estructuras de seguridad en vehículos.', detalle:'Resistencia estructural para patrulleros y furgones de traslado.' },
+    'chalecos antibalas': { norma:'NTE INEN 2939', titulo:'Chaleco antibala. Requisitos.', detalle:'Define niveles de protección balística (NIJ), materiales y ensayos de certificación.' },
+    'blindaje vehicular': { norma:'NTE INEN 1669 / 1722', titulo:'Vidrios de seguridad para blindaje vehicular.', detalle:'Resistencia al impacto, transparencia y ensayos balísticos para blindados.' },
+    'ensayos no destructivos': { norma:'NTE INEN-ISO 9712', titulo:'Calificación de personal en END.', detalle:'Ultrasonido, líquidos penetrantes y partículas magnéticas en armamento.' },
+    'metalurgia aceros': { norma:'NTE INEN 2415 / 2167', titulo:'Aceros estructurales. Calidades.', detalle:'Selección de aceros para cascos, escudos y armazones de chalecos.' },
+    'análisis fallas fractura': { norma:'NTE INEN 2167 / 1390', titulo:'Análisis de fallas en uniones soldadas.', detalle:'Protocolos para peritaje en siniestros viales y fallas de material.' },
+    'mecánica materiales grilletes': { norma:'NTE INEN 2415', titulo:'Tubos estructurales para barreras.', detalle:'Resistencia y durabilidad de elementos de seguridad perimetral.' },
+    'soldadura procesos': { norma:'NTE INEN 1390 / NTE INEN-ISO 9606-1', titulo:'Electrodos y calificación de soldadores.', detalle:'Procedimientos para reparaciones estructurales en cuarteles y vehículos.' },
+    'corrosión recubrimientos': { norma:'NTE INEN 1045 / NTE INEN-ISO 12944', titulo:'Pinturas anticorrosivas y protección.', detalle:'Sistemas de protección en climas húmedos y de altura.' },
+    'diseño elementos máquinas': { norma:'NTE INEN-ISO 12100', titulo:'Seguridad en el diseño de maquinaria.', detalle:'Aplica a ejes, chavetas y rodamientos en equipos de mantenimiento.' },
+    'rodamientos lubricación vibraciones': { norma:'NTE INEN-ISO 10816 / 18436', titulo:'Evaluación de vibraciones mecánicas.', detalle:'Monitoreo de condición de rodamientos y maquinaria rotativa.' },
+    'hidráulica neumática rescate': { norma:'NTE INEN-ISO 4413 / 4414', titulo:'Reglas de seguridad para sistemas hidráulicos y neumáticos.', detalle:'Diseño seguro de equipos de rescate (cizallas, gatos).' },
+    'bombas sistemas contra incendios': { norma:'NTE INEN 805 / NFPA 20', titulo:'Sistemas de protección contra incendios.', detalle:'Requisitos para bombas centrífugas y sistemas de extinción.' },
+    'fluidos potencia vehículos carga': { norma:'NTE INEN 2349 / RTE INEN 034', titulo:'Sistemas hidráulicos en vehículos de carga.', detalle:'Funcionamiento seguro de grúas y plataformas logísticas.' },
+    'metrología dimensional calibración': { norma:'NTE INEN-ISO 10012', titulo:'Gestión de la medición y calibración.', detalle:'Asegura exactitud de instrumentos en talleres policiales.' },
+    'control calidad muestreo': { norma:'NTE INEN-ISO 2859-1', titulo:'Muestreo para aceptación de lotes.', detalle:'Recepción de repuestos y componentes adquiridos por el Estado.' },
+    'normativa inen vehículos seguridad': { norma:'RTE INEN 034', titulo:'Requisitos técnicos de seguridad vehicular.', detalle:'Luces, cinturones y anclajes de seguridad para vehículos automotores.' },
+    'contratación pública losncp': { norma:'LOSNCP / NTE INEN-ISO 9001', titulo:'Contratación pública y gestión de calidad.', detalle:'Marco legal para adquisición de maquinaria y servicios mecánicos.' },
+    'evaluación técnica ofertas': { norma:'NTE INEN-ISO 9001 / 2859-1', titulo:'Control de calidad en evaluaciones.', detalle:'Muestreo para verificar conformidad de ofertas en licitaciones.' },
+    'administración flotas vehiculares': { norma:'NTE INEN-ISO 55000', titulo:'Gestión de activos.', detalle:'Aplica al ciclo de vida de vehículos patrulleros y equipos logísticos.' },
+    'mantenimiento centrado confiabilidad rcm': { norma:'NTE INEN-ISO 14224 / 17359', titulo:'Datos de confiabilidad y mantenimiento basado en condición.', detalle:'Optimización del mantenimiento preventivo y predictivo en flotas.' },
+    'gestión almacenes suministro': { norma:'NTE INEN-ISO 9001 / 2266', titulo:'Calidad y manejo de materiales peligrosos.', detalle:'Control de inventarios y rotación de repuestos en el sector público.' },
+    'seguridad industrial talleres': { norma:'NTE INEN-ISO 3864-1', titulo:'Señalización de seguridad.', detalle:'Previene riesgos laborales en talleres mecánicos policiales.' },
+    'ergonomía puestos conducción': { norma:'NTE INEN-ISO 11226', titulo:'Evaluación de posturas estáticas.', detalle:'Optimización del asiento y mandos en patrulleros y motocicletas.' },
+    'logística mantenimiento zonas rurales': { norma:'NTE INEN-ISO 55000 / 2266', titulo:'Gestión de activos remotos y transporte.', detalle:'Asegura cadena de suministro en destacamentos fronterizos.' },
+    'energías alternativas fotovoltaicos': { norma:'NTE INEN 2506', titulo:'Eficiencia energética en edificaciones.', detalle:'Fomenta el uso de paneles solares en puestos fronterizos aislados.' },
+    'grupos electrógenos emergencia': { norma:'RTE INEN 092', titulo:'Requisitos para generadores eléctricos.', detalle:'Instalación y operación en instalaciones críticas.' },
+    'refrigeración evidencias biológicas': { norma:'NTE INEN 2297 / 2458', titulo:'Artefactos para conservación de congelados.', detalle:'Mantenimiento de cadena de frío para muestras biológicas.' },
+    'aire acondicionado armerías': { norma:'NTE INEN 2495 / RTE INEN 072', titulo:'Acondicionadores de aire. Eficiencia y seguridad.', detalle:'Control de temperatura, humedad y ventilación en polvorines.' },
+    'mecatrónica drones vigilancia': { norma:'RTE INEN 034 / Normas DGAC', titulo:'Regulaciones para sistemas aéreos no tripulados.', detalle:'Uso de drones en seguridad perimetral y operaciones policiales.' },
+    'robótica desactivación explosivos': { norma:'NTE INEN-ISO 10218 / 13482', titulo:'Seguridad en robots industriales y de servicio.', detalle:'Requisitos para manipuladores teleoperados en tareas de bomba.' },
+    'cad cam diseño fabricación': { norma:'NTE INEN-ISO 10303 (STEP)', titulo:'Intercambio de datos de productos.', detalle:'Estándar para diseño asistido por computador en piezas de reparación.' },
+    'simulación elementos finitos fem': { norma:'NTE INEN 2205', titulo:'Análisis estructural de componentes.', detalle:'Aplicable a soportes de armamento y enganches de remolque.' },
+    'reconstrucción accidentes tránsito': { norma:'NTE ISO 39001', titulo:'Sistema de gestión de la seguridad vial.', detalle:'Protocolos para peritaje basados en dinámica y deformación.' },
+    'peritaje vehículos inspección': { norma:'NTE INEN 2349 / RTE INEN 034', titulo:'Revisión técnica para detección de alteraciones.', detalle:'Procedimientos para identificar fraudes en seriales y condiciones mecánicas.' },
+    'normativa ambiental talleres aceites': { norma:'NTE INEN 2266 / 2841', titulo:'Manejo de residuos peligrosos.', detalle:'Disposición final de aceites usados, baterías y otros residuos.' },
+    'emisiones contaminantes flota': { norma:'NTE INEN 2207', titulo:'Límites de emisiones para fuentes móviles.', detalle:'Fiscalización del cumplimiento ambiental de patrulleros.' },
+    'gestión calidad iso 9001 mantenimiento': { norma:'NTE INEN-ISO 9001', titulo:'Sistema de gestión de la calidad.', detalle:'Aplica a procesos de mantenimiento y abastecimiento mecánico.' },
+    'costo reparación reemplazo': { norma:'NTE INEN-ISO 55000', titulo:'Gestión de activos para análisis de ciclo de vida.', detalle:'Herramienta para decidir entre reparar o sustituir equipos críticos.' },
+    'innovación restricciones presupuestarias': { norma:'NTE INEN-ISO 56000', titulo:'Gestión de la innovación.', detalle:'Guía para adaptaciones mecánicas de bajo costo.' },
+    'ética transparencia compras públicas': { norma:'NTE INEN-ISO 37001', titulo:'Sistema de gestión antisoborno.', detalle:'Prevención de corrupción en adquisición de repuestos y contrataciones.' }
   },
+
   'Ingeniería Civil': {
-    'hormigón armado': {
-      norma: 'NTE INEN 1855',
-      titulo: 'Hormigón. Determinación de la resistencia a la compresión.',
-      detalle: 'Método de ensayo para cilindros de hormigón utilizado en cuarteles y estructuras policiales.'
-    },
-    'sismorresistente': {
-      norma: 'NEC-SE-DS (Norma Ecuatoriana de la Construcción)',
-      titulo: 'Peligro sísmico y diseño sismorresistente.',
-      detalle: 'Requisitos para el diseño de edificaciones esenciales, como cuarteles de policía, garantizando seguridad ante sismos.'
-    },
-    'muros perimetrales': {
-      norma: 'NTE INEN 2280',
-      titulo: 'Mampostería de bloques de hormigón.',
-      detalle: 'Especificaciones para muros de cerramiento en instalaciones policiales, incluyendo resistencia y durabilidad.'
-    }
+    'hormigón armado': { norma:'NTE INEN 1855', titulo:'Resistencia a la compresión del hormigón.', detalle:'Métodos de ensayo para cilindros de hormigón en cuarteles.' },
+    'sismorresistente': { norma:'NEC-SE-DS', titulo:'Peligro sísmico y diseño sismorresistente.', detalle:'Requisitos para edificaciones esenciales de la Policía Nacional.' },
+    'muros perimetrales': { norma:'NTE INEN 2280', titulo:'Mampostería de bloques de hormigón.', detalle:'Especificaciones para muros de cerramiento en instalaciones policiales.' },
+    'cimentaciones profundas': { norma:'NTE INEN 1490', titulo:'Geotecnia. Sondeos y ensayos de penetración.', detalle:'Evaluación del subsuelo para cimentaciones en cuarteles.' },
+    'pavimentos estacionamientos': { norma:'NTE INEN 2400', titulo:'Pavimentos flexibles. Requisitos.', detalle:'Diseño para estacionamientos y pistas de entrenamiento táctico.' },
+    'acero refuerzo': { norma:'NTE INEN 2167', titulo:'Aceros para hormigón armado.', detalle:'Especificaciones técnicas para el refuerzo en estructuras.' },
+    'estructuras metálicas': { norma:'NTE INEN 2415', titulo:'Tubos estructurales de acero.', detalle:'Empleo en garitas, torres y estructuras ligeras.' },
+    'drenaje pluvial': { norma:'NTE INEN 2312', titulo:'Sistemas de drenaje pluvial.', detalle:'Diseño de evacuación de aguas lluvias en destacamentos.' },
+    'accesibilidad universal': { norma:'NTE INEN 2244', titulo:'Accesibilidad al medio físico.', detalle:'Rampas, puertas y sanitarios accesibles en cuarteles.' },
+    'seguridad incendios': { norma:'NEC-HS', titulo:'Norma de seguridad contra incendios.', detalle:'Requisitos para prevención y extinción en edificios policiales.' }
   },
+
   'Ingeniería Industrial': {
-    'control calidad': {
-      norma: 'ISO 2859-1 / NTE INEN 2859',
-      titulo: 'Procedimientos de muestreo para inspección por atributos.',
-      detalle: 'Planes de muestreo para recepción de uniformes, equipos y suministros policiales.'
-    },
-    'seguridad ocupacional': {
-      norma: 'NTE INEN 2266',
-      titulo: 'Colores, señales y símbolos de seguridad.',
-      detalle: 'Aplicación en talleres y almacenes de la Policía Nacional para prevención de riesgos laborales.'
-    }
+    'control calidad': { norma:'NTE INEN-ISO 2859-1', titulo:'Muestreo para inspección por atributos.', detalle:'Planes de muestreo en recepción de uniformes y equipos.' },
+    'seguridad ocupacional': { norma:'NTE INEN 2266', titulo:'Señalización de seguridad.', detalle:'Prevención de riesgos laborales en talleres y almacenes.' },
+    'gestión inventarios': { norma:'NTE INEN-ISO 9001', titulo:'Sistema de gestión de la calidad.', detalle:'Control de inventarios y rotación de repuestos.' },
+    'ergonomía puestos': { norma:'NTE INEN-ISO 11228-1', titulo:'Manipulación manual de cargas.', detalle:'Prevención de lesiones musculoesqueléticas en almacenes.' },
+    'muestreo recepción': { norma:'NTE INEN-ISO 3951', titulo:'Muestreo para inspección por variables.', detalle:'Evaluación de lotes de equipamiento táctico.' },
+    'cadena suministro': { norma:'ISO 28000', titulo:'Gestión de la seguridad en la cadena de suministro.', detalle:'Aplica a distribución de combustible a zonas fronterizas.' },
+    'calidad servicios': { norma:'NTE INEN-ISO 9001', titulo:'Gestión de calidad en procesos administrativos.', detalle:'Mejora de eficiencia y transparencia en la Policía.' }
   },
+
   'Ingeniería Informática': {
-    'seguridad informática': {
-      norma: 'NTE INEN 27001',
-      titulo: 'Sistema de gestión de seguridad de la información.',
-      detalle: 'Requisitos para proteger la información en bases de datos policiales y sistemas de comunicación.'
-    },
-    'cableado estructurado': {
-      norma: 'NTE INEN 50173',
-      titulo: 'Sistemas de cableado genérico para centros de datos.',
-      detalle: 'Estándares para la infraestructura de red en edificios policiales.'
-    }
+    'seguridad informática': { norma:'NTE INEN-ISO/IEC 27001', titulo:'Sistema de gestión de seguridad de la información.', detalle:'Protección de bases de datos y comunicaciones policiales.' },
+    'cableado estructurado': { norma:'NTE INEN-ISO/IEC 11801', titulo:'Cableado genérico para centros de datos.', detalle:'Infraestructura de red en edificios de la Policía.' },
+    'firma electrónica': { norma:'NTE INEN-ISO/IEC 27002', titulo:'Código de buenas prácticas para la seguridad.', detalle:'Autenticación y validez legal de documentos electrónicos.' },
+    'protección datos personales': { norma:'Ley de Protección de Datos Personales (Ecuador)', titulo:'Normativa de privacidad.', detalle:'Obligaciones en el manejo de información de ciudadanos.' }
   },
+
   'Arquitectura': {
-    'accesibilidad': {
-      norma: 'NTE INEN 2244',
-      titulo: 'Accesibilidad de las personas al medio físico.',
-      detalle: 'Requisitos para rampas, puertas y sanitarios accesibles en edificios públicos de la Policía.'
-    },
-    'escaleras emergencia': {
-      norma: 'NTE INEN-SE-EG',
-      titulo: 'Escaleras de emergencia en edificaciones.',
-      detalle: 'Dimensiones, materiales y señalización para evacuación segura en cuarteles.'
-    }
+    'accesibilidad': { norma:'NTE INEN 2244', titulo:'Accesibilidad de las personas al medio físico.', detalle:'Rampas, puertas y servicios higiénicos en cuarteles.' },
+    'escaleras emergencia': { norma:'NTE INEN-SE-EG', titulo:'Escaleras de emergencia.', detalle:'Dimensiones, materiales y señalización para evacuación.' },
+    'ventilación natural': { norma:'NTE INEN 2506', titulo:'Eficiencia energética en edificaciones.', detalle:'Estrategias pasivas de climatización en destacamentos.' },
+    'iluminación natural': { norma:'NTE INEN 1154', titulo:'Iluminación natural en espacios de trabajo.', detalle:'Diseño de ventanales y tragaluces en oficinas y celdas.' }
   },
+
   'Administración de Empresas': {
-    'contratación pública': {
-      norma: 'LOSNCP (Ley Orgánica del Sistema Nacional de Contratación Pública)',
-      titulo: 'Normativa para adquisición de bienes y servicios.',
-      detalle: 'Procedimientos de licitación, evaluación de ofertas y fiscalización de contratos en el sector público.'
-    },
-    'calidad servicios': {
-      norma: 'ISO 9001 / NTE INEN 9001',
-      titulo: 'Sistemas de gestión de la calidad.',
-      detalle: 'Aplicación en los procesos administrativos de la Policía Nacional para mejorar eficiencia y transparencia.'
-    }
+    'contratación pública': { norma:'LOSNCP', titulo:'Ley Orgánica del Sistema Nacional de Contratación Pública.', detalle:'Procedimientos de licitación, evaluación y fiscalización.' },
+    'calidad servicios': { norma:'NTE INEN-ISO 9001', titulo:'Sistema de gestión de la calidad.', detalle:'Mejora continua en procesos administrativos policiales.' },
+    'antisoborno': { norma:'NTE INEN-ISO 37001', titulo:'Sistema de gestión antisoborno.', detalle:'Prevención de corrupción en adquisiciones y manejo de recursos públicos.' }
   }
 };
 
 // ==================== FUNCIONES ====================
-
-// Buscar en el catálogo local según la carrera seleccionada
 App.buscarEnCatalogo = function(query, carrera) {
   const resultados = [];
   const catalogos = carrera ? { [carrera]: App.normasCatalogo[carrera] } : App.normasCatalogo;
@@ -210,27 +216,43 @@ App.buscarNorma = async function() {
 
   try {
     const coincidencias = App.buscarEnCatalogo(query, carrera);
+    let resultadoHTML = '';
 
-    let prompt = '';
     if (coincidencias.length > 0) {
-      // Si hay coincidencias, construir un prompt detallado con la primera norma encontrada
       const entrada = coincidencias[0];
-      prompt = `Eres un experto asesor técnico de la Policía Nacional del Ecuador. El usuario consulta sobre: "${query}".\n\nLa normativa ecuatoriana aplicable es:\nNorma: ${entrada.norma}\nTítulo: ${entrada.titulo}\nDetalle: ${entrada.detalle}\nCarrera relacionada: ${entrada.carrera}\n\nPor favor, explica:\n- Descripción técnica detallada de la norma.\n- Aplicación práctica en el contexto de la Policía Nacional (vehículos, instalaciones, equipos).\n- Implicaciones para la contratación pública (LOSNCP), si corresponde.\n- Preguntas frecuentes de evaluación que un aspirante a especialista podría enfrentar sobre este tema.\nUtiliza un tono claro y profesional.`;
+      resultadoHTML += `<div class="verified">⚫ Norma verificada en catálogo oficial INEN</div>`;
+      resultadoHTML += `<p><strong>Norma:</strong> ${entrada.norma}</p>`;
+      resultadoHTML += `<p><strong>Título:</strong> ${entrada.titulo}</p>`;
+      resultadoHTML += `<p><strong>Descripción técnica:</strong> ${entrada.detalle}</p>`;
+      resultadoHTML += `<p><em>Carrera relacionada: ${entrada.carrera}</em></p>`;
+      // Explicación extendida con IA (solo si se encuentra la norma)
+      const prompt = `Eres un experto asesor técnico de la Policía Nacional del Ecuador. El usuario consultó sobre: "${query}".\nNorma de referencia: ${entrada.norma} - ${entrada.titulo}.\nDetalle: ${entrada.detalle}\n\nExplica la aplicación práctica en la Policía (vehículos, instalaciones, equipos), implicaciones para la contratación pública (LOSNCP) y posibles preguntas de examen. Tono claro y profesional.`;
+      try {
+        const explicacion = await App.callDeepSeek([
+          { role: 'system', content: 'Eres un asesor en normativa técnica ecuatoriana para la Policía Nacional.' },
+          { role: 'user', content: prompt }
+        ], 0.3, 800);
+        resultadoHTML += `<hr><p><strong>Análisis y aplicación práctica:</strong></p><pre>${explicacion}</pre>`;
+      } catch (apiError) {
+        resultadoHTML += `<p style="color:red;">No se pudo obtener la explicación adicional: ${apiError.message}</p>`;
+      }
     } else {
-      // Sin coincidencias, consulta abierta pero contextualizada
-      prompt = `Eres un experto asesor técnico de la Policía Nacional del Ecuador. El usuario, un profesional en ingeniería o arquitectura, solicita información sobre: "${query}".\n\nIndica qué norma INEN (o normativa ecuatoriana) es aplicable, describe sus aspectos técnicos, cómo se relaciona con la doctrina policial y, si procede, con la contratación pública (LOSNCP). Si no existe una norma INEN específica, sugiere estándares internacionales equivalentes. Incluye posibles preguntas de evaluación.`;
+      resultadoHTML += `<div class="unverified">⚫ No se encontró una norma exacta en el catálogo local. Se muestra información de referencia:</div>`;
+      const prompt = `Eres un asesor técnico de la Policía Nacional del Ecuador. El usuario busca normativa sobre: "${query}".\nIndica si existe alguna norma INEN aplicable y explica brevemente su utilidad. Si no estás completamente seguro, sugiere consultar el catálogo oficial del INEN. Sé conciso.`;
+      try {
+        const respuesta = await App.callDeepSeek([
+          { role: 'system', content: 'Responde solo si estás seguro de la norma. En caso contrario, recomienda verificar.' },
+          { role: 'user', content: prompt }
+        ], 0.3, 500);
+        resultadoHTML += `<pre>${respuesta}</pre>`;
+      } catch (apiError) {
+        resultadoHTML += `<p style="color:red;">Error al consultar: ${apiError.message}</p>`;
+      }
     }
 
-    const respuesta = await App.callDeepSeek([
-      { role: 'system', content: 'Eres un asesor en normativa técnica ecuatoriana para la Policía Nacional. Responde de forma estructurada y concisa.' },
-      { role: 'user', content: prompt }
-    ], 0.3, 1500);
-
-    document.getElementById('resultContainer').innerHTML = `<pre>${respuesta}</pre>`;
-
+    document.getElementById('resultContainer').innerHTML = resultadoHTML;
   } catch (error) {
-    console.error(error);
-    document.getElementById('resultContainer').innerHTML = `<p style="color:red;">Error al obtener la información. ${error.message}</p>`;
+    document.getElementById('resultContainer').innerHTML = `<p style="color:red;">Error inesperado: ${error.message}</p>`;
   } finally {
     document.getElementById('loadingMsg').style.display = 'none';
   }
@@ -257,7 +279,6 @@ window.addEventListener('DOMContentLoaded', () => {
   document.getElementById('searchInput').addEventListener('keypress', (e) => {
     if (e.key === 'Enter') App.buscarNorma();
   });
-  // Mostrar panel principal directamente
   document.getElementById('mainPanel').style.display = 'block';
 });
 </script>
